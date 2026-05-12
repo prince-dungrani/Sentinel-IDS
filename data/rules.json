@@ -1,0 +1,79 @@
+[
+  {
+    "name": "Manual Test Rule",
+    "severity": "LOW",
+    "group": "Testing",
+    "protocol": "TCP",
+    "field": "uri",
+    "content": "/test",
+    "threshold": 1
+  },
+  {
+    "name": "SQL Injection",
+    "severity": "HIGH",
+    "group": "Application",
+    "protocol": "TCP",
+    "field": "uri",
+    "regex": "(?i)(union select|or 1=1|and 1=1)",
+    "threshold": 1
+  },
+  {
+    "name": "SQLMap User-Agent",
+    "severity": "HIGH",
+    "group": "Application",
+    "protocol": "TCP",
+    "field": "user_agent",
+    "content": "sqlmap",
+    "nocase": true,
+    "threshold": 1
+  },
+  {
+    "name": "Suspicious HTTP Request",
+    "severity": "MEDIUM",
+    "group": "Application",
+    "protocol": "TCP",
+    "field": "uri",
+    "content": "cmd=",
+    "nocase": true,
+    "threshold": 2
+  },
+  {
+    "name": "DNS Tunneling",
+    "severity": "MEDIUM",
+    "group": "Network",
+    "protocol": "UDP",
+    "field": "dns_query",
+    "length_gt": 50,
+    "threshold": 1
+  },
+  {
+    "name": "Ping Detection",
+    "severity": "LOW",
+    "group": "Network",
+    "protocol": "ICMP",
+    "threshold": 5
+  },
+  {
+    "name": "Suspicious Port Access",
+    "severity": "HIGH",
+    "group": "Suspicious Behavior",
+    "protocol": "TCP",
+    "ports": [
+      22,
+      23,
+      445
+    ],
+    "threshold": 3
+  },
+  {
+    "name": "Automated Test Rule",
+    "group": "Application",
+    "severity": "LOW",
+    "protocol": "TCP",
+    "field": "payload",
+    "port": 9999,
+    "content": "test_match",
+    "id": "48b745cb-e830-4a0d-84b0-b3d7e10d5ee2",
+    "status": "enabled"
+  }
+]
