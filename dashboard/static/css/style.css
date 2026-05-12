@@ -1,0 +1,127 @@
+/* Base Theme Settings */
+:root {
+    --bg-dark: #0f1219;
+    --bg-panel: #1a1e28;
+    --text-main: #e2e8f0;
+    --text-light: #94a3b8;
+    --border-color: #2d3748;
+    
+    --accent-primary: #3b82f6;
+    --accent-danger: #ef4444;
+    --accent-success: #10b981;
+    --accent-info: #0ea5e9;
+    --accent-warning: #f59e0b;
+}
+
+body.dark-theme {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow-x: hidden;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* Wrapper & Sidebar */
+#wrapper { overflow-x: hidden; }
+#sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -15rem;
+    transition: margin .25s ease-out;
+    background-color: var(--bg-panel);
+    border-right: 1px solid var(--border-color);
+    width: 15rem;
+    position: relative;
+}
+#wrapper.toggled #sidebar-wrapper { margin-left: 0; }
+
+.list-group-item {
+    background-color: transparent;
+    color: var(--text-light);
+    border: none;
+    transition: all 0.2s;
+}
+.list-group-item:hover, .list-group-item.active {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--text-main);
+    border-left: 3px solid var(--accent-primary);
+}
+
+@media (min-width: 768px) {
+    #sidebar-wrapper { margin-left: 0; }
+    #page-content-wrapper { min-width: 0; width: 100%; }
+    #wrapper.toggled #sidebar-wrapper { margin-left: -15rem; }
+}
+
+/* Navbar */
+.top-navbar {
+    background-color: var(--bg-panel);
+    border-color: var(--border-color) !important;
+}
+
+/* Cards & Panels */
+.card {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+.card-header { border-bottom: 1px solid var(--border-color); }
+
+/* Metric Cards */
+.metric-card { transition: transform 0.2s; }
+.metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+.border-left-primary { border-left: 4px solid var(--accent-primary) !important; }
+.border-left-danger { border-left: 4px solid var(--accent-danger) !important; }
+.border-left-info { border-left: 4px solid var(--accent-info) !important; }
+.border-left-success { border-left: 4px solid var(--accent-success) !important; }
+
+/* Tables */
+.table-dark {
+    --bs-table-bg: var(--bg-panel);
+    --bs-table-color: var(--text-main);
+    --bs-table-border-color: var(--border-color);
+    --bs-table-hover-bg: rgba(255,255,255,0.05);
+}
+.table-dark-header th {
+    background-color: #111827 !important;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--border-color);
+}
+.table td { vertical-align: middle; font-size: 0.875rem; border-color: var(--border-color); }
+
+/* Badges */
+.badge-high { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5); }
+.badge-medium { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5); }
+.badge-low { background-color: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.5); }
+
+/* Animations */
+.pulse-anim { animation: pulse 2s infinite; }
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.7; }
+}
+
+.pulse-bg { animation: pulseBg 2s infinite; }
+@keyframes pulseBg {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Forms */
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-dark);
+    color: white;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
