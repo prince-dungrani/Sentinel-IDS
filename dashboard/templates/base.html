@@ -3,92 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOC Platform | Network IDS</title>
-    <!-- Bootstrap 5 CSS -->
+    <meta name="description" content="Sentinel-IDS — Enterprise AI Network Intrusion Detection System">
+    <title>Sentinel-IDS | {% block page_title %}SOC Platform{% endblock %}</title>
+
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Leaflet.js (Attack Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block head %}{% endblock %}
 </head>
 <body class="dark-theme">
 
-    <div class="d-flex" id="wrapper">
-        
-        <!-- Sidebar -->
-        <div class="sidebar text-white" id="sidebar-wrapper">
-            <div class="sidebar-heading border-bottom p-3 text-center mb-3">
-                <i class="fa-solid fa-shield-halved fa-2x text-primary mb-2"></i><br>
-                <span class="fs-5 fw-bold tracking-wide">SOC<span class="text-primary">PLATFORM</span></span>
+<div id="wrapper">
+
+    <!-- ====================== SIDEBAR ====================== -->
+    <aside id="sidebar-wrapper">
+
+        <!-- Brand -->
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-shield-virus"></i>
             </div>
-            <div class="list-group list-group-flush px-2">
-                <a href="{{ url_for('dashboard_overview') }}" class="list-group-item list-group-item-action py-3 {% if active_page == 'dashboard' %}active{% endif %}">
-                    <i class="fa-solid fa-chart-pie me-2"></i> Analytics
-                </a>
-                <a href="{{ url_for('alerts_view') }}" class="list-group-item list-group-item-action py-3 {% if active_page == 'alerts' %}active{% endif %}">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Event Monitoring
-                </a>
-                <a href="{{ url_for('threat_intel_view') }}" class="list-group-item list-group-item-action py-3 {% if active_page == 'intel' %}active{% endif %}">
-                    <i class="fa-solid fa-globe-crosshairs me-2"></i> Threat Intelligence
-                </a>
-                <a href="{{ url_for('rules_view') }}" class="list-group-item list-group-item-action py-3 {% if active_page == 'rules' %}active{% endif %}">
-                    <i class="fa-solid fa-book-skull me-2"></i> Rule Management
-                </a>
-                <a href="{{ url_for('settings_view') }}" class="list-group-item list-group-item-action py-3 {% if active_page == 'settings' %}active{% endif %}">
-                    <i class="fa-solid fa-gear me-2"></i> Settings
-                </a>
-            </div>
-            
-            <div class="position-absolute bottom-0 w-100 p-3 border-top border-secondary text-light small text-center">
-                Engine: <span class="text-success fw-bold"><i class="fa-solid fa-circle fa-2xs pulse-anim"></i> Online</span>
+            <div class="brand-text">
+                <div class="brand-name">SENTINEL</div>
+                <div class="brand-sub">AI · NIDS Platform</div>
             </div>
         </div>
-        <!-- /#sidebar-wrapper -->
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Monitor</div>
+
+            <a href="{{ url_for('dashboard_overview') }}"
+               class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                SOC Overview
+            </a>
+
+            <a href="{{ url_for('alerts_view') }}"
+               class="nav-item {% if active_page == 'alerts' %}active{% endif %}">
+                <span class="nav-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                Event Monitor
+                <span class="ms-auto badge bg-danger rounded-pill" id="sidebar-alert-count" style="font-size:9px; display:none;"></span>
+            </a>
+
+            <div class="sidebar-section-label">Intelligence</div>
+
+            <a href="{{ url_for('threat_intel_view') }}"
+               class="nav-item {% if active_page == 'intel' %}active{% endif %}">
+                <span class="nav-icon"><i class="fa-solid fa-earth-americas"></i></span>
+                Attack Map
+            </a>
+
+            <a href="{{ url_for('rules_view') }}"
+               class="nav-item {% if active_page == 'rules' %}active{% endif %}">
+                <span class="nav-icon"><i class="fa-solid fa-scroll"></i></span>
+                Rule Engine
+            </a>
+
+            <a href="{{ url_for('knowledge_view') }}"
+               class="nav-item {% if active_page == 'knowledge' %}active{% endif %}">
+                <span class="nav-icon"><i class="fa-solid fa-book-open"></i></span>
+                Knowledge Base
+            </a>
+
+            <div class="sidebar-section-label">System</div>
+
+            <a href="{{ url_for('settings_view') }}"
+               class="nav-item {% if active_page == 'settings' %}active{% endif %}">
+                <span class="nav-icon"><i class="fa-solid fa-sliders"></i></span>
+                ML Settings
+            </a>
+        </nav>
+
+        <!-- Status Footer -->
+        <div class="sidebar-footer">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span style="font-size:11px; color:var(--text-secondary);">
+                    Engine <strong style="color:var(--accent-green);">ONLINE</strong>
+                </span>
+            </div>
+            <div style="font-size:10px; color:var(--text-dim); margin-top:4px; font-family:var(--font-mono);">
+                v2.0 · Hybrid AI
+            </div>
+        </div>
+
+    </aside>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- ====================== MAIN CONTENT ====================== -->
+    <div id="page-content-wrapper">
+
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <!-- Mobile menu toggle -->
+            <button class="nav-action-btn d-md-none" id="menu-toggle">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="page-title">
+                {% block header_title %}Overview{% endblock %}
+            </div>
+
+            <div class="nav-actions">
+                <!-- Alert Bell -->
+                <div class="position-relative">
+                    <button class="nav-action-btn" title="Alerts">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                    <span id="nav-alert-badge"
+                          class="position-absolute"
+                          style="top:-4px;right:-4px;width:14px;height:14px;background:var(--sev-critical);border-radius:50%;font-size:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;display:none;">
+                    </span>
+                </div>
+
+                <!-- Refresh -->
+                <button class="nav-action-btn" id="global-refresh" title="Refresh data">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+
+                <!-- User -->
+                <div class="nav-user">
+                    <div class="nav-avatar">SA</div>
+                    <span class="nav-username d-none d-md-block">SOC Analyst</span>
+                </div>
+            </div>
+        </header>
 
         <!-- Page Content -->
-        <div id="page-content-wrapper" class="w-100 flex-grow-1">
-            <nav class="navbar navbar-expand-lg border-bottom px-4 top-navbar">
-                <div class="container-fluid">
-                    <button class="btn btn-outline-secondary d-md-none me-3" id="menu-toggle"><i class="fa-solid fa-bars"></i></button>
-                    
-                    <span class="navbar-brand mb-0 h1 fs-4 text-white">
-                        {% block header_title %}Overview{% endblock %}
-                    </span>
-                    
-                    <div class="ms-auto d-flex align-items-center">
-                        <div class="position-relative me-4">
-                            <i class="fa-solid fa-bell fs-5 text-light"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px;">
-                                <span class="visually-hidden">New alerts</span>
-                            </span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <img src="https://ui-avatars.com/api/?name=SOC+Analyst&background=0D8ABC&color=fff" alt="Admin" class="rounded-circle me-2" width="35" height="35">
-                            <span class="text-white">SOC Analyst</span>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+        <main class="main-content-area">
+            {% block content %}{% endblock %}
+        </main>
 
-            <div class="container-fluid px-4 py-4 main-content-area">
-                {% block content %}{% endblock %}
-            </div>
-        </div>
     </div>
+    <!-- /#page-content-wrapper -->
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        document.getElementById("menu-toggle").addEventListener("click", function(e) {
-            e.preventDefault();
-            document.getElementById("wrapper").classList.toggle("toggled");
-        });
-    </script>
-    
-    {% block scripts %}{% endblock %}
+</div>
+<!-- /#wrapper -->
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Leaflet.js -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // Mobile sidebar toggle
+    document.getElementById("menu-toggle")?.addEventListener("click", function (e) {
+        e.preventDefault();
+        document.getElementById("wrapper").classList.toggle("toggled");
+    });
+
+    // Global refresh button
+    document.getElementById("global-refresh")?.addEventListener("click", function () {
+        this.querySelector("i").style.animation = "spin 0.8s linear infinite";
+        setTimeout(() => location.reload(), 300);
+    });
+
+    // ====================== Toast System ======================
+    window.showToast = function (type, title, message, duration = 4000) {
+        const icons = { success: '✅', danger: '🚨', warning: '⚠️', info: 'ℹ️' };
+        const colors = { success: 'var(--accent-green)', danger: 'var(--sev-critical)', warning: 'var(--accent-yellow)', info: 'var(--accent-blue)' };
+        const toast = document.createElement("div");
+        toast.className = "sentinel-toast";
+        toast.style.borderLeftColor = colors[type] || colors.info;
+        toast.style.borderLeftWidth = "3px";
+        toast.innerHTML = `
+            <div class="toast-icon" style="color:${colors[type]}">${icons[type] || icons.info}</div>
+            <div>
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-msg">${message}</div>` : ''}
+            </div>
+        `;
+        toast.onclick = () => toast.remove();
+        document.getElementById("toast-container").appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = "none";
+            toast.style.opacity = "0";
+            toast.style.transform = "translateX(100%)";
+            toast.style.transition = "all 0.3s";
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    };
+
+    // ====================== Live Alert Counter ======================
+    (function pollAlertCount() {
+        fetch('/api/stats')
+            .then(r => r.json())
+            .then(data => {
+                const count = data.data?.total_alerts || 0;
+                const badge = document.getElementById("sidebar-alert-count");
+                const navBadge = document.getElementById("nav-alert-badge");
+                if (count > 0) {
+                    if (badge) { badge.style.display = "inline"; badge.textContent = count > 99 ? "99+" : count; }
+                    if (navBadge) { navBadge.style.display = "flex"; navBadge.textContent = count > 9 ? "!" : count; }
+                }
+            }).catch(() => {});
+        setTimeout(pollAlertCount, 30000);
+    })();
+</script>
+
+{% block scripts %}{% endblock %}
 
 </body>
 </html>
