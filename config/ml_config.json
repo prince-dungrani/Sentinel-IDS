@@ -1,0 +1,13 @@
+{
+  "alpha": 0.6,
+  "beta": 0.4,
+  "anomaly_threshold": 0.5,
+  "confidence_threshold": 0.65,
+  "sensitivity": "medium",
+  "false_positive_tolerance": "medium",
+  "rf_weight": 0.6,
+  "iso_weight": 0.4,
+  "ml_enabled": true,
+  "explainability_enabled": true,
+  "top_features_count": 5
+}

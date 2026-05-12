@@ -1,0 +1,26 @@
+# ============================================================
+# Sentinel-IDS / Hybrid AI NIDS — Requirements
+# ============================================================
+
+# --- Core Packet Capture ---
+scapy>=2.5.0
+
+# --- Web Dashboard ---
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# --- Machine Learning ---
+scikit-learn>=1.3.0
+joblib>=1.3.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# --- GeoIP Resolution ---
+geoip2>=4.7.0
+maxminddb>=2.4.0
+
+# --- System Monitoring ---
+psutil>=5.9.0
+
+# --- Utility ---
+requests>=2.31.0
