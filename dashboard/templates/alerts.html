@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block header_title %}Real-Time Network Alerts{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4 alerts-card">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-dark border-bottom border-secondary">
+        <h6 class="m-0 font-weight-bold text-light"><i class="fa-solid fa-list-ul me-2"></i> Event Log</h6>
+        
+        <!-- Controls -->
+        <div class="d-flex align-items-center">
+            <span class="badge bg-success me-3 pulse-bg"><i class="fa-solid fa-satellite-dish me-1"></i> Live</span>
+            
+            <div class="input-group input-group-sm me-2" style="width: 250px;">
+                <span class="input-group-text bg-dark text-light border-secondary"><i class="fa-solid fa-search"></i></span>
+                <input type="text" id="tableSearch" class="form-control bg-dark text-light border-secondary" placeholder="Search IP, Protocol, Type...">
+            </div>
+            
+            <select class="form-select form-select-sm bg-dark text-light border-secondary me-2" id="severityFilter" style="width: 120px;">
+                <option value="ALL">All Severities</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="card-body bg-dark p-0">
+        <div class="table-responsive table-container">
+            <table class="table table-dark table-hover table-sm mb-0 align-middle" id="alertsTable">
+                <thead class="table-dark-header sticky-top">
+                    <tr>
+                        <th scope="col" class="ps-3 py-3">Timestamp</th>
+                        <th scope="col" class="py-3">Severity</th>
+                        <th scope="col" class="py-3">Attack Type</th>
+                        <th scope="col" class="py-3">Source IP</th>
+                        <th scope="col" class="py-3">Dest IP</th>
+                        <th scope="col" class="py-3">Protocol</th>
+                        <th scope="col" class="py-3 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="alertsTableBody" class="border-top-0">
+                    <!-- Data populated by JS -->
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-light">
+                            <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
+                            Loading initial logs...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/alerts.js') }}"></script>
+{% endblock %}

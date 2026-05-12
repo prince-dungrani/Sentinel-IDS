@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block header_title %}Rule Management Engine{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-dark border-bottom border-secondary d-flex justify-content-between align-items-center py-3">
+                <h6 class="m-0 text-light"><i class="fa-solid fa-file-shield me-2"></i> Custom Detection Rules</h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+                    <i class="fa-solid fa-plus me-1"></i> Add New Rule
+                </button>
+            </div>
+            <div class="card-body bg-dark p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-sm mb-0 align-middle" id="rulesTable">
+                        <thead class="table-dark-header">
+                            <tr>
+                                <th scope="col" class="ps-3 py-3">Status</th>
+                                <th scope="col" class="py-3">Rule Name</th>
+                                <th scope="col" class="py-3">Severity</th>
+                                <th scope="col" class="py-3">Category</th>
+                                <th scope="col" class="py-3">Protocol</th>
+                                <th scope="col" class="py-3">Target Port</th>
+                                <th scope="col" class="py-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rulesTableBody" class="border-top-0">
+                            <tr><td colspan="7" class="text-center py-4"><div class="spinner-border spinner-border-sm text-secondary"></div> Loading rules...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Rule Modal -->
+<div class="modal fade" id="addRuleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-panel text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="fa-solid fa-code text-primary me-2"></i> Create Detection Rule</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addRuleForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-light small">Rule Name / Signature</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" id="ruleName" required placeholder="e.g., Block Malicious Payload">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-light small">Category Group</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="ruleGroup">
+                                <option value="Application">Application</option>
+                                <option value="Network">Network</option>
+                                <option value="Suspicious Behavior">Suspicious Behavior</option>
+                                <option value="Malware">Malware</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-light small">Severity</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="ruleSeverity">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="CRITICAL">Critical</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-light small">Protocol</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="ruleProtocol">
+                                <option value="TCP">TCP</option>
+                                <option value="UDP">UDP</option>
+                                <option value="ICMP">ICMP</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-light small">Target Port (Optional)</label>
+                            <input type="number" class="form-control bg-dark text-light border-secondary" id="rulePort" placeholder="e.g., 80">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light small">Detection Logic (Content Match)</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary font-monospace" id="ruleContent" placeholder="e.g., union select">
+                        <div class="form-text text-light">Leave empty to match any packet on the specified port.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveRule()">Save & Deploy Rule</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/rules.js') }}"></script>
+{% endblock %}

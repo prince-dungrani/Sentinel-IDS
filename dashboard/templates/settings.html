@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block header_title %}System Configuration{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- General Settings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-dark border-bottom border-secondary">
+                <h6 class="m-0 text-light"><i class="fa-solid fa-sliders me-2"></i> IDS Engine Configuration</h6>
+            </div>
+            <div class="card-body bg-dark text-light p-4">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label text-light small">Capture Interface</label>
+                        <select class="form-select bg-dark text-light border-secondary">
+                            <option>eth0 (Primary)</option>
+                            <option>wlan0 (Wireless)</option>
+                            <option>lo (Loopback)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light small">Alert Polling Interval (seconds)</label>
+                        <input type="number" class="form-control bg-dark text-light border-secondary" value="5">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-light small">Log Retention (Days)</label>
+                        <input type="number" class="form-control bg-dark text-light border-secondary" value="30">
+                    </div>
+                    
+                    <h6 class="text-light mb-3">Detection Modules</h6>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
+                        <label class="form-check-label">Heuristic DDoS Detection</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
+                        <label class="form-check-label">Port Scan Detection</label>
+                    </div>
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
+                        <label class="form-check-label">Suricata Signature Engine</label>
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100"><i class="fa-solid fa-save me-2"></i> Save Configuration</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Preferences -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-dark border-bottom border-secondary">
+                <h6 class="m-0 text-light"><i class="fa-solid fa-desktop me-2"></i> Dashboard Preferences</h6>
+            </div>
+            <div class="card-body bg-dark text-light p-4">
+                <div class="mb-4">
+                    <label class="form-label text-light small">Theme Mode</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="theme" id="darkTheme" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="darkTheme"><i class="fa-solid fa-moon me-2"></i> Dark SOC</label>
+
+                        <input type="radio" class="btn-check" name="theme" id="lightTheme" autocomplete="off" disabled>
+                        <label class="btn btn-outline-secondary" for="lightTheme"><i class="fa-solid fa-sun me-2"></i> Light (Disabled)</label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-light small">Alert Notifications</label>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
+                        <label class="form-check-label">Enable Audio Alerts for Critical Threats</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
+                        <label class="form-check-label">Show Browser Desktop Notifications</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

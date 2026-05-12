@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block header_title %}Security Analytics Overview{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Row -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100 py-2 metric-card border-left-primary">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Alerts (24h)</div>
+                        <div class="h3 mb-0 font-weight-bold text-white" id="metric-total-alerts">--</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fa-solid fa-shield-virus fa-2x text-light opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100 py-2 metric-card border-left-danger">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">High Severity Alerts</div>
+                        <div class="h3 mb-0 font-weight-bold text-white" id="metric-critical-alerts">--</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fa-solid fa-radiation fa-2x text-danger opacity-75 pulse-anim"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100 py-2 metric-card border-left-info">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Active Connections</div>
+                        <div class="h3 mb-0 font-weight-bold text-white" id="metric-connections">--</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fa-solid fa-network-wired fa-2x text-light opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100 py-2 metric-card border-left-success">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Engine Status</div>
+                        <div class="h5 mb-0 font-weight-bold text-success mt-1"><i class="fa-solid fa-check-circle me-1"></i> ONLINE</div>
+                        <div class="small text-light mt-1" id="metric-packets">Packets: --</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fa-solid fa-server fa-2x text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- Attack Distribution -->
+    <div class="col-xl-4 col-lg-5 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-light">Threat Signatures Detected</h6>
+            </div>
+            <div class="card-body pb-2">
+                <div class="chart-pie pt-4 pb-2" style="height: 250px;">
+                    <canvas id="attackPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Attacker IPs -->
+    <div class="col-xl-4 col-lg-5 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-light">Top Source IPs</h6>
+            </div>
+            <div class="card-body pb-2">
+                <div class="chart-bar pt-4 pb-2" style="height: 250px;">
+                    <canvas id="topIpsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Protocol Distribution -->
+    <div class="col-xl-4 col-lg-5 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-light">Protocol Distribution</h6>
+            </div>
+            <div class="card-body pb-2">
+                <div class="chart-doughnut pt-4 pb-2" style="height: 250px;">
+                    <canvas id="protocolChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block header_title %}Incident Investigation: {{ alert.id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Alert Info -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-dark border-bottom border-secondary d-flex justify-content-between align-items-center">
+                <h5 class="m-0 text-light"><i class="fa-solid fa-magnifying-glass-chart me-2"></i> Event Details</h5>
+                <div>
+                    {% if alert.severity == 'HIGH' or alert.severity == 'CRITICAL' %}
+                        <span class="badge badge-high fs-6"><i class="fa-solid fa-fire me-1"></i> {{ alert.severity }}</span>
+                    {% elif alert.severity == 'MEDIUM' %}
+                        <span class="badge badge-medium fs-6">{{ alert.severity }}</span>
+                    {% else %}
+                        <span class="badge badge-low fs-6">{{ alert.severity }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body bg-dark text-light p-4">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-light text-uppercase small">Attack Type</h6>
+                        <p class="fs-5 fw-bold text-danger">{{ alert.attack_type }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-light text-uppercase small">Timestamp</h6>
+                        <p class="fs-5 font-monospace">{{ alert.timestamp }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4 bg-panel p-3 rounded border border-secondary">
+                    <div class="col-md-5">
+                        <h6 class="text-light text-uppercase small">Source (Attacker)</h6>
+                        <p class="fs-5 font-monospace text-info mb-1">{{ alert.src_ip }}</p>
+                        <p class="text-light small mb-0">Port: {{ alert.src_port }}</p>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-arrow-right-long fa-2x text-secondary"></i>
+                    </div>
+                    <div class="col-md-5 text-end">
+                        <h6 class="text-light text-uppercase small">Destination (Target)</h6>
+                        <p class="fs-5 font-monospace text-warning mb-1">{{ alert.dst_ip }}</p>
+                        <p class="text-light small mb-0">Port: {{ alert.dst_port }}</p>
+                    </div>
+                </div>
+
+                <h6 class="text-light text-uppercase small mt-4">Payload Preview</h6>
+                <div class="bg-black p-3 rounded border border-secondary font-monospace text-success small" style="overflow-x: auto; max-height: 150px;">
+                    {{ alert.payload_preview }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metadata & Actions -->
+    <div class="col-lg-4 mb-4">
+        <!-- Actions Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-dark border-bottom border-secondary">
+                <h6 class="m-0 text-light">Incident Actions</h6>
+            </div>
+            <div class="card-body bg-dark p-3 d-grid gap-2">
+                <button class="btn btn-outline-success"><i class="fa-solid fa-check-double me-2"></i> Mark as Investigated</button>
+                <button class="btn btn-outline-warning"><i class="fa-solid fa-ban me-2"></i> Ignore / False Positive</button>
+                <button class="btn btn-outline-info"><i class="fa-solid fa-download me-2"></i> Export PCAP Data</button>
+                <button class="btn btn-outline-danger"><i class="fa-solid fa-trash me-2"></i> Delete Alert</button>
+            </div>
+        </div>
+
+        <!-- Metadata Card -->
+        <div class="card shadow">
+            <div class="card-header bg-dark border-bottom border-secondary">
+                <h6 class="m-0 text-light">Packet Metadata</h6>
+            </div>
+            <div class="card-body bg-dark p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between">
+                        <span class="text-light">Protocol</span>
+                        <span class="fw-bold">{{ alert.protocol }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between">
+                        <span class="text-light">Packet Size</span>
+                        <span>{{ alert.packet_size }} bytes</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between">
+                        <span class="text-light">TCP Flags</span>
+                        <span class="font-monospace text-info">{{ alert.flags if alert.flags else 'N/A' }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between">
+                        <span class="text-light">Detection Engine</span>
+                        <span>{{ alert.engine }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-light border-secondary d-flex flex-column">
+                        <span class="text-light mb-1">Triggered Rule</span>
+                        <span class="small font-monospace bg-panel p-2 rounded text-danger">{{ alert.rule }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
