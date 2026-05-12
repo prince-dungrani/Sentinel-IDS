@@ -1,56 +1,163 @@
 {% extends "base.html" %}
-
-{% block header_title %}Threat Intelligence Center{% endblock %}
+{% block page_title %}Live Attack Map{% endblock %}
+{% block header_title %}<i class="fa-solid fa-earth-americas me-2 text-cyan"></i> Live Attack Map{% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Map Placeholder -->
-    <div class="col-12 mb-4">
-        <div class="card shadow">
-            <div class="card-header bg-dark border-bottom border-secondary">
-                <h6 class="m-0 text-light"><i class="fa-solid fa-earth-americas me-2"></i> Global Threat Map (Simulated)</h6>
+<div class="fade-in-up">
+
+    <!-- Top Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="metric-card critical">
+                <div class="metric-icon" style="background:rgba(220,38,38,0.1)"><i class="fa-solid fa-crosshairs" style="color:var(--sev-critical)"></i></div>
+                <div class="metric-value" id="map-total">--</div>
+                <div class="metric-label">Active Threats</div>
             </div>
-            <div class="card-body bg-dark p-0 position-relative" style="height: 350px; overflow: hidden; background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg'); background-size: cover; background-position: center; filter: invert(0.9) hue-rotate(180deg) brightness(0.5);">
-                <!-- Animated attack lines would go here -->
-                <div class="position-absolute top-50 start-50 translate-middle text-center" style="z-index: 10;">
-                    <div class="spinner-grow text-danger pulse-anim mb-2" role="status"></div>
-                    <h5 class="text-white text-shadow">Awaiting GeoIP Integration...</h5>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card high">
+                <div class="metric-icon" style="background:rgba(239,68,68,0.1)"><i class="fa-solid fa-flag" style="color:var(--sev-high)"></i></div>
+                <div class="metric-value" id="map-countries">--</div>
+                <div class="metric-label">Attack Countries</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card info">
+                <div class="metric-icon" style="background:rgba(6,182,212,0.1)"><i class="fa-solid fa-bolt" style="color:var(--accent-cyan)"></i></div>
+                <div class="metric-value" id="map-top-attacker">--</div>
+                <div class="metric-label">Top Attacker</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card success">
+                <div class="metric-icon" style="background:rgba(16,185,129,0.1)"><i class="fa-solid fa-shield-check" style="color:var(--accent-green)"></i></div>
+                <div class="metric-value" id="map-ioc-count">--</div>
+                <div class="metric-label">Tracked IOCs</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <!-- Live Attack Map -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">
+                        <i class="fa-solid fa-map-location-dot text-cyan"></i>
+                        LIVE ATTACK MAP
+                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="sev-badge sev-critical" style="font-size:9px;">
+                            <i class="fa-solid fa-circle" style="animation:pulse-dot 1.5s infinite"></i> LIVE
+                        </span>
+                        <button class="btn-sentinel btn-outline-s btn-sm" id="btn-heatmap" style="font-size:11px; padding:4px 10px;">
+                            <i class="fa-solid fa-fire"></i> Heatmap
+                        </button>
+                        <button class="btn-sentinel btn-outline-s btn-sm" id="btn-refresh-map" style="font-size:11px; padding:4px 10px;">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="attack-map"></div>
+                </div>
+                <!-- Map Legend -->
+                <div class="p-3 border-top-subtle" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+                    <span style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">Severity:</span>
+                    <span style="font-size:11px;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#dc2626;border-radius:50%;display:inline-block;box-shadow:0 0 6px #dc2626"></span> Critical</span>
+                    <span style="font-size:11px;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#f97316;border-radius:50%;display:inline-block;box-shadow:0 0 6px #f97316"></span> High</span>
+                    <span style="font-size:11px;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#f59e0b;border-radius:50%;display:inline-block;box-shadow:0 0 6px #f59e0b"></span> Medium</span>
+                    <span style="font-size:11px;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#3b82f6;border-radius:50%;display:inline-block;"></span> Low</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- IOCs -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark border-bottom border-secondary d-flex justify-content-between align-items-center">
-                <h6 class="m-0 text-light"><i class="fa-solid fa-spider me-2"></i> Active Indicators of Compromise (IOCs)</h6>
-                <span class="badge bg-danger">LIVE</span>
+    <div class="row g-3 mb-4">
+        <!-- Top Attacker IPs (IOC Scoring) -->
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-skull-crossbones text-danger"></i> TOP THREAT ACTORS</span>
+                    <span class="sev-badge sev-info" style="font-size:9px;">Risk Score /100</span>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush" id="iocList">
+                        <li class="list-group-item d-flex justify-content-center py-4">
+                            <div class="spinner-small"></div>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="card-body bg-dark p-0">
-                <ul class="list-group list-group-flush" id="iocList">
-                    <li class="list-group-item bg-transparent text-light border-secondary text-center py-4">
-                        <div class="spinner-border spinner-border-sm text-danger" role="status"></div> Loading Live Threats...
-                    </li>
-                </ul>
+        </div>
+
+        <!-- MITRE ATT&CK Mapping -->
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-chess-knight" style="color:var(--accent-purple)"></i> MITRE ATT&CK MAPPING</span>
+                </div>
+                <div class="card-body" id="mitreList">
+                    <div class="d-flex justify-content-center py-4"><div class="spinner-small"></div></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MITRE ATT&CK -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark border-bottom border-secondary">
-                <h6 class="m-0 text-light"><i class="fa-solid fa-chess-knight me-2"></i> MITRE ATT&CK Mapping</h6>
+    <div class="row g-3">
+        <!-- Top Countries -->
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-flag" style="color:var(--accent-orange)"></i> ATTACK ORIGIN COUNTRIES</span>
+                </div>
+                <div class="card-body p-0">
+                    <table class="sentinel-table" id="countryTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Country</th>
+                                <th>Attacks</th>
+                                <th>Share</th>
+                            </tr>
+                        </thead>
+                        <tbody id="countryBody">
+                            <tr><td colspan="4" class="text-center py-4"><div class="spinner-small mx-auto"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-body bg-dark p-4" id="mitreList">
-                <div class="text-center py-4"><div class="spinner-border spinner-border-sm text-secondary"></div> Mapping techniques...</div>
+        </div>
+
+        <!-- IOC Management -->
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-ban" style="color:var(--sev-high)"></i> IOC MANAGEMENT</span>
+                    <button class="btn-sentinel btn-outline-s" style="font-size:11px;padding:4px 10px;" onclick="document.getElementById('iocInput').style.display='block'">
+                        <i class="fa-solid fa-plus"></i> Add IP
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="iocInput" style="display:none; margin-bottom:14px;">
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" id="iocIpInput" placeholder="Enter IP address...">
+                            <button class="btn-sentinel btn-danger-s" onclick="blacklistIP()"><i class="fa-solid fa-ban"></i> Block</button>
+                            <button class="btn-sentinel btn-primary-s" onclick="whitelistIP()"><i class="fa-solid fa-check"></i> Allow</button>
+                        </div>
+                    </div>
+                    <div id="iocManagementList">
+                        <div class="text-center py-4"><div class="spinner-small mx-auto"></div></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/attack_map.js') }}"></script>
 <script src="{{ url_for('static', filename='js/threat_intel.js') }}"></script>
 {% endblock %}
