@@ -1,60 +1,119 @@
+"""
+core/detector.py
+================
+Sentinel-IDS — Triple-Engine Detection Pipeline
+
+Detection Engines:
+  A. Signature Engine  — JSON rules + Suricata rule compatibility
+  B. Heuristic Engine  — Behavior-based anomaly detection
+  C. ML Engine         — Hybrid RandomForest + IsolationForest
+
+Flow:
+  features -> [Engine A] -> [Engine B] -> [Engine C] -> AlertManager -> log
+"""
+
 import os
 import time
 import json
 import re
 import uuid
+import logging
 from datetime import datetime
 from collections import defaultdict
 
-RULES_FILE = "data/rules.json"
-SURICATA_FILE = "data/suricata.rules"
+from core.alert_manager import AlertManager
+from core import ml_engine
 
+log = logging.getLogger("sentinel.detector")
+
+# =========================================================
+# Rule File Paths
+# =========================================================
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+RULES_FILE = os.path.join(BASE_DIR, "data", "rules.json")
+SURICATA_FILE = os.path.join(BASE_DIR, "data", "suricata.rules")
+CONFIG_FILE = os.path.join(BASE_DIR, "config", "config.json")
+
+# =========================================================
+# Rule Storage (module-level for process-lifetime caching)
+# =========================================================
 RULES = []
-last_rules_mtime = 0
+_last_rules_mtime = 0.0
 
-def load_suricata_rules(filepath=SURICATA_FILE):
-    global RULES
+# =========================================================
+# Global AlertManager instance (per-process singleton)
+# =========================================================
+_alert_manager = AlertManager(
+    rate_limit_window=10,
+    max_alerts_per_window=5,
+    escalation_threshold=3,
+    escalation_window=60
+)
+
+
+# =========================================================
+# Config Loader
+# =========================================================
+def _load_config() -> dict:
+    try:
+        with open(CONFIG_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {
+            "syn_flood_threshold": 50,
+            "port_scan_threshold": 15,
+            "icmp_flood_threshold": 30,
+            "suspicious_ports": [22, 23, 445],
+            "alert_rate_limit": 5,
+        }
+
+
+CONFIG = _load_config()
+
+
+# =========================================================
+# Suricata Rule Parser
+# =========================================================
+def _load_suricata_rules(filepath: str):
+    """Parse Suricata-format .rules file into internal rule dict format."""
     if not os.path.exists(filepath):
-        return
-        
-    with open(filepath, "r") as f:
+        return []
+    rules = []
+    with open(filepath, "r", errors="replace") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-                
             try:
                 header, options = line.split("(", 1)
                 options = options.rstrip(")")
-                
                 parts = header.split()
-                if len(parts) < 7: continue
-                
+                if len(parts) < 7:
+                    continue
+
                 protocol = parts[1].upper()
                 dst_port_str = parts[6]
-                
+
                 rule = {
                     "name": "Suricata Rule",
                     "severity": "HIGH",
                     "group": "Suricata",
                     "protocol": protocol,
                     "threshold": 1,
-                    "status": "enabled"
+                    "status": "enabled",
                 }
-                
+
                 if dst_port_str.isdigit():
                     rule["port"] = int(dst_port_str)
-                    
-                opt_pairs = options.split(";")
-                for opt in opt_pairs:
+
+                for opt in options.split(";"):
                     opt = opt.strip()
-                    if not opt: continue
-                    
+                    if not opt:
+                        continue
                     if ":" in opt:
                         key, val = opt.split(":", 1)
                         key = key.strip()
                         val = val.strip().strip('"')
-                        
                         if key == "msg":
                             rule["name"] = val
                         elif key == "content":
@@ -63,81 +122,53 @@ def load_suricata_rules(filepath=SURICATA_FILE):
                             rule["sid"] = val
                     elif opt == "nocase":
                         rule["nocase"] = True
-                        
-                RULES.append(rule)
-            except Exception as e:
+
+                rules.append(rule)
+            except Exception:
                 pass
+    return rules
 
-def reload_rules_if_needed():
-    global RULES, last_rules_mtime
+
+# =========================================================
+# Dynamic Rule Reloader (hot-reload without restart)
+# =========================================================
+def _reload_rules_if_needed():
+    global RULES, _last_rules_mtime
     try:
-        current_mtime = os.path.getmtime(RULES_FILE)
-        if current_mtime > last_rules_mtime:
+        mtime = os.path.getmtime(RULES_FILE)
+        if mtime > _last_rules_mtime:
             with open(RULES_FILE) as f:
-                loaded_rules = json.load(f)
-                RULES = [r for r in loaded_rules if r.get("status", "enabled").lower() != "disabled"]
-            load_suricata_rules()
-            last_rules_mtime = current_mtime
-            print("[*] Rules dynamically reloaded by Engine.")
+                loaded = json.load(f)
+            RULES = [r for r in loaded if r.get("status", "enabled").lower() != "disabled"]
+            RULES += _load_suricata_rules(SURICATA_FILE)
+            _last_rules_mtime = mtime
+            log.info(f"[Detector] Rules hot-reloaded — {len(RULES)} rules active.")
     except Exception as e:
-        # Ignore if file is temporarily inaccessible
-        pass
+        log.debug(f"[Detector] Rule reload skipped: {e}")
 
-# Flow tracking
-packet_count = defaultdict(int)
-port_access = defaultdict(set)
-last_seen = defaultdict(float)
 
-rule_hits = defaultdict(int)
+# =========================================================
+# Heuristic Flow Tracking State
+# =========================================================
+_packet_count: dict = defaultdict(int)
+_port_access: dict = defaultdict(set)
+_last_seen: dict = defaultdict(float)
+_rule_hits: dict = defaultdict(int)
 
+# Time window for heuristic analysis (seconds)
 TIME_WINDOW = 10
-DDOS_THRESHOLD = 20
-PORT_SCAN_THRESHOLD = 10
-SUSPICIOUS_PORTS = [22, 23, 445]
 
-def match_rule(features, rule):
-    protocol = features.get("protocol")
-    dst_port = features.get("dst_port")
 
-    if rule.get("protocol") and protocol != rule["protocol"]:
-        return False
-
-    if "port" in rule and dst_port != rule["port"]:
-        return False
-
-    if "ports" in rule and dst_port not in rule["ports"]:
-        return False
-
-    target_field = rule.get("field", "payload")
-
-    if target_field == "payload" and "reassembled_payload" in features:
-        value = str(features["reassembled_payload"])
-    else:
-        value = str(features.get(target_field, ""))
-
-    if "content" in rule:
-        if rule.get("nocase"):
-            if rule["content"].lower() not in value.lower():
-                return False
-        else:
-            if rule["content"] not in value:
-                return False
-
-    if "regex" in rule:
-        if not re.search(rule["regex"], value):
-            return False
-
-    if "length_gt" in rule:
-        if len(value) <= rule["length_gt"]:
-            return False
-
-    return True
-
-def create_alert_obj(features, attack_type, severity, rule_name, engine):
-    """Generates the professional JSON logging structure."""
-    
-    payload = str(features.get("payload", ""))
-    payload_preview = payload[:100] + "..." if len(payload) > 100 else payload
+# =========================================================
+# Alert Object Factory
+# =========================================================
+def _create_alert(features: dict, attack_type: str, severity: str,
+                  rule_name: str, engine_name: str) -> dict:
+    """
+    Create a standardized alert dict with all enterprise fields.
+    """
+    payload = str(features.get("payload", features.get("reassembled_payload", "")))
+    preview = payload[:100] + "..." if len(payload) > 100 else payload
 
     return {
         "id": f"ALERT-{str(uuid.uuid4())[:8].upper()}",
@@ -154,62 +185,205 @@ def create_alert_obj(features, attack_type, severity, rule_name, engine):
         "flags": features.get("flags", ""),
         "status": "ACTIVE",
         "rule": rule_name,
-        "payload_preview": payload_preview,
-        "engine": engine
+        "payload_preview": preview,
+        "engine": engine_name,
+        # These fields are enriched by AlertManager:
+        "risk_score": 0,
+        "mitre_tactic": "",
+        "mitre_technique": "",
+        "mitre_technique_name": "",
+        "hit_count": 1,
+        "engines_triggered": [engine_name],
+        "ml_confidence": 0.0,
+        "ml_label": "N/A",
+        "ml_top_features": [],
     }
 
-def detect(features):
-    alerts = []
-    reload_rules_if_needed()
 
-    src_ip = features.get("src_ip")
+# =========================================================
+# Engine A — Signature Rule Matching
+# =========================================================
+def _match_rule(features: dict, rule: dict) -> bool:
+    """Returns True if packet features match a given rule definition."""
+    proto = features.get("protocol")
     dst_port = features.get("dst_port")
-    current_time = time.time()
-    flags = features.get("flags", "")
 
-    if current_time - last_seen[src_ip] > TIME_WINDOW:
-        packet_count[src_ip] = 0
-        port_access[src_ip].clear()
+    if rule.get("protocol") and proto != rule["protocol"]:
+        return False
+    if "port" in rule and dst_port != rule["port"]:
+        return False
+    if "ports" in rule and dst_port not in rule["ports"]:
+        return False
 
-    last_seen[src_ip] = current_time
-    packet_count[src_ip] += 1
-    if dst_port:
-        port_access[src_ip].add(dst_port)
+    target_field = rule.get("field", "payload")
+    if target_field == "payload" and "reassembled_payload" in features:
+        value = str(features["reassembled_payload"])
+    else:
+        value = str(features.get(target_field, ""))
 
-    # 1. RULE ENGINE
+    if "content" in rule:
+        check = rule["content"].lower() if rule.get("nocase") else rule["content"]
+        haystack = value.lower() if rule.get("nocase") else value
+        if check not in haystack:
+            return False
+
+    if "regex" in rule:
+        flags = re.IGNORECASE if rule.get("nocase") else 0
+        if not re.search(rule["regex"], value, flags):
+            return False
+
+    if "length_gt" in rule and len(value) <= rule["length_gt"]:
+        return False
+
+    return True
+
+
+def _run_signature_engine(features: dict) -> list:
+    """Engine A: Match features against all loaded rules."""
+    alerts = []
     for rule in RULES:
-        if match_rule(features, rule):
-            rule_hits[rule["name"]] += 1
-            if rule_hits[rule["name"]] >= rule.get("threshold", 1):
-                alerts.append(create_alert_obj(
-                    features, 
-                    rule["group"], 
-                    rule["severity"], 
-                    rule["name"], 
+        if _match_rule(features, rule):
+            _rule_hits[rule["name"]] += 1
+            if _rule_hits[rule["name"]] >= rule.get("threshold", 1):
+                alert = _create_alert(
+                    features,
+                    rule.get("group", "Signature"),
+                    rule.get("severity", "MEDIUM"),
+                    rule["name"],
                     "Signature Engine"
-                ))
+                )
+                alerts.append(alert)
+    return alerts
 
-    # 2. FLOW DETECTION
-    if packet_count[src_ip] > DDOS_THRESHOLD and flags == "S":
-        alerts.append(create_alert_obj(
-            features, "SYN Flood", "HIGH", "Possible SYN Flood", "Heuristic Engine"
-        ))
 
-    if len(port_access[src_ip]) > PORT_SCAN_THRESHOLD:
-        alerts.append(create_alert_obj(
-            features, "Port Scan", "MEDIUM", "Possible Port Scan", "Heuristic Engine"
-        ))
+# =========================================================
+# Engine B — Heuristic Behavior Analysis
+# =========================================================
+def _run_heuristic_engine(features: dict) -> list:
+    """Engine B: Detect behavioral anomalies through flow analysis."""
+    alerts = []
+    src_ip = features.get("src_ip", "Unknown")
+    dst_port = features.get("dst_port")
+    flags = features.get("flags", "")
+    now = time.time()
 
-    if dst_port in SUSPICIOUS_PORTS:
-        alerts.append(create_alert_obj(
-            features, "Suspicious Access", "HIGH", f"Access to port {dst_port}", "Heuristic Engine"
-        ))
+    syn_thresh = CONFIG.get("syn_flood_threshold", 50)
+    port_thresh = CONFIG.get("port_scan_threshold", 15)
+    susp_ports = CONFIG.get("suspicious_ports", [22, 23, 445])
 
+    # Reset flow counters after time window
+    if now - _last_seen[src_ip] > TIME_WINDOW:
+        _packet_count[src_ip] = 0
+        _port_access[src_ip].clear()
+
+    _last_seen[src_ip] = now
+    _packet_count[src_ip] += 1
+    if dst_port:
+        _port_access[src_ip].add(dst_port)
+
+    # SYN Flood Detection
+    if _packet_count[src_ip] > syn_thresh and flags == "S":
+        alerts.append(_create_alert(features, "SYN Flood", "HIGH",
+                                    "Possible SYN Flood", "Heuristic Engine"))
+
+    # Port Scan Detection
+    if len(_port_access[src_ip]) > port_thresh:
+        alerts.append(_create_alert(features, "Port Scan", "MEDIUM",
+                                    "Possible Port Scan", "Heuristic Engine"))
+
+    # Suspicious Port Access
+    if dst_port in susp_ports:
+        alerts.append(_create_alert(features, "Suspicious Access", "HIGH",
+                                    f"Access to sensitive port {dst_port}",
+                                    "Heuristic Engine"))
+
+    # DNS Tunneling Detection
     if dst_port == 53:
-        query = features.get("dns_query", "")
-        if len(query) > 50:
-            alerts.append(create_alert_obj(
-                features, "DNS Tunneling", "MEDIUM", "Possible DNS Tunneling", "Heuristic Engine"
-            ))
+        dns_query = features.get("dns_query", "")
+        if len(dns_query) > 50:
+            alerts.append(_create_alert(features, "DNS Tunneling", "MEDIUM",
+                                        "DNS query length anomaly", "Heuristic Engine"))
 
     return alerts
+
+
+# =========================================================
+# Engine C — ML Inference
+# =========================================================
+def _run_ml_engine(features: dict) -> tuple[list, dict]:
+    """
+    Engine C: Run ML inference and generate alert if triggered.
+    Returns (alerts_list, ml_result_dict).
+    ml_result is passed to AlertManager for confidence fusion.
+    """
+    try:
+        ml_result = ml_engine.predict(features)
+    except Exception as e:
+        log.debug(f"[Detector] ML prediction error: {e}")
+        return [], {"ml_triggered": False, "ml_confidence": 0.0}
+
+    alerts = []
+    if ml_result.get("ml_triggered"):
+        label = ml_result.get("ml_label", "ML Anomaly")
+        confidence = ml_result.get("ml_confidence", 0.0)
+
+        # Map confidence to severity
+        if confidence >= 0.90:
+            severity = "CRITICAL"
+        elif confidence >= 0.75:
+            severity = "HIGH"
+        elif confidence >= 0.60:
+            severity = "MEDIUM"
+        else:
+            severity = "LOW"
+
+        alert = _create_alert(
+            features,
+            f"ML: {label}",
+            severity,
+            f"ML Prediction ({confidence:.0%} confidence)",
+            "ML Engine"
+        )
+        alert["ml_confidence"] = confidence
+        alert["ml_label"] = label
+        alert["ml_top_features"] = ml_result.get("top_features", [])
+        alerts.append(alert)
+
+    return alerts, ml_result
+
+
+# =========================================================
+# Main Detection Entry Point
+# =========================================================
+def detect(features: dict) -> list:
+    """
+    Run all three detection engines and return fully enriched alerts.
+
+    Args:
+        features: Parsed packet feature dictionary from protocol_parser.py
+
+    Returns:
+        List of enriched alert dicts ready for logging
+    """
+    _reload_rules_if_needed()
+
+    candidate_alerts = []
+
+    # --- Engine A: Signature ---
+    candidate_alerts.extend(_run_signature_engine(features))
+
+    # --- Engine B: Heuristic ---
+    candidate_alerts.extend(_run_heuristic_engine(features))
+
+    # --- Engine C: ML ---
+    ml_alerts, ml_result = _run_ml_engine(features)
+    candidate_alerts.extend(ml_alerts)
+
+    # --- AlertManager: Enrich, Rate-Limit, Score, Escalate ---
+    final_alerts = []
+    for alert in candidate_alerts:
+        enriched = _alert_manager.process(alert, ml_result=ml_result)
+        if enriched is not None:
+            final_alerts.append(enriched)
+
+    return final_alerts
