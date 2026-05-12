@@ -1,85 +1,183 @@
 {% extends "base.html" %}
-
-{% block header_title %}System Configuration{% endblock %}
+{% block page_title %}ML Settings{% endblock %}
+{% block header_title %}<i class="fa-solid fa-sliders me-2" style="color:var(--accent-cyan)"></i> ML Engine Settings{% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- General Settings -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark border-bottom border-secondary">
-                <h6 class="m-0 text-light"><i class="fa-solid fa-sliders me-2"></i> IDS Engine Configuration</h6>
-            </div>
-            <div class="card-body bg-dark text-light p-4">
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label text-light small">Capture Interface</label>
-                        <select class="form-select bg-dark text-light border-secondary">
-                            <option>eth0 (Primary)</option>
-                            <option>wlan0 (Wireless)</option>
-                            <option>lo (Loopback)</option>
+<div class="fade-in-up">
+
+    <div class="row g-3">
+
+        <!-- ML Parameter Tuning -->
+        <div class="col-12 col-lg-7">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-brain" style="color:var(--accent-purple)"></i> ML ENGINE PARAMETERS</span>
+                    <span id="save-status" class="sev-badge sev-info" style="font-size:9px;display:none;">Saved ✓</span>
+                </div>
+                <div class="card-body">
+
+                    <!-- ML Toggle -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:20px;">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">ML Engine Active</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">Enable or disable real-time ML inference</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="ml-enabled" style="width:44px;height:22px;" checked>
+                        </div>
+                    </div>
+
+                    <!-- Alpha -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label class="slider-label">α Alpha — Supervised Weight (RandomForest)</label>
+                            <span class="slider-value" id="alpha-val">0.60</span>
+                        </div>
+                        <input type="range" class="form-range" min="0" max="1" step="0.05" value="0.60" id="alpha">
+                        <div class="slider-desc">Controls how much the RandomForest classification score contributes to the final detection score.</div>
+                    </div>
+
+                    <!-- Beta -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label class="slider-label">β Beta — Unsupervised Weight (IsolationForest)</label>
+                            <span class="slider-value" id="beta-val">0.40</span>
+                        </div>
+                        <input type="range" class="form-range" min="0" max="1" step="0.05" value="0.40" id="beta">
+                        <div class="slider-desc">Controls the anomaly detection component. Higher = more sensitive to unknown attacks.</div>
+                    </div>
+
+                    <!-- Confidence Threshold -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label class="slider-label">Confidence Threshold</label>
+                            <span class="slider-value" id="conf-val">0.65</span>
+                        </div>
+                        <input type="range" class="form-range" min="0.3" max="0.99" step="0.01" value="0.65" id="conf-threshold">
+                        <div class="slider-desc">Minimum fusion score required to trigger an ML alert. Lower = more sensitive, more false positives.</div>
+                    </div>
+
+                    <!-- Anomaly Threshold -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label class="slider-label">Anomaly Sensitivity</label>
+                            <span class="slider-value" id="anom-val">0.50</span>
+                        </div>
+                        <input type="range" class="form-range" min="0.1" max="0.9" step="0.05" value="0.50" id="anom-threshold">
+                        <div class="slider-desc">IsolationForest anomaly score threshold. Values closer to 0 = more anomalies flagged.</div>
+                    </div>
+
+                    <!-- Sensitivity Preset -->
+                    <div class="mb-4">
+                        <label class="form-label">Detection Sensitivity Preset</label>
+                        <select class="form-select" id="sensitivity">
+                            <option value="low">Low — Minimal false positives, may miss subtle threats</option>
+                            <option value="medium" selected>Medium — Balanced (Recommended)</option>
+                            <option value="high">High — Maximum detection, higher false positive rate</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label text-light small">Alert Polling Interval (seconds)</label>
-                        <input type="number" class="form-control bg-dark text-light border-secondary" value="5">
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label text-light small">Log Retention (Days)</label>
-                        <input type="number" class="form-control bg-dark text-light border-secondary" value="30">
-                    </div>
-                    
-                    <h6 class="text-light mb-3">Detection Modules</h6>
-                    <div class="form-check form-switch mb-2">
-                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
-                        <label class="form-check-label">Heuristic DDoS Detection</label>
-                    </div>
-                    <div class="form-check form-switch mb-2">
-                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
-                        <label class="form-check-label">Port Scan Detection</label>
-                    </div>
-                    <div class="form-check form-switch mb-4">
-                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
-                        <label class="form-check-label">Suricata Signature Engine</label>
+
+                    <!-- Top Features Count -->
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <label class="slider-label">Explainability — Top Features Shown</label>
+                            <span class="slider-value" id="feat-val">5</span>
+                        </div>
+                        <input type="range" class="form-range" min="1" max="15" step="1" value="5" id="top-features">
+                        <div class="slider-desc">Number of top contributing features to display in the alert explainability panel.</div>
                     </div>
 
-                    <button type="button" class="btn btn-primary w-100"><i class="fa-solid fa-save me-2"></i> Save Configuration</button>
-                </form>
+                    <div class="d-flex gap-2">
+                        <button class="btn-sentinel btn-primary-s" onclick="saveMLConfig()">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Configuration
+                        </button>
+                        <button class="btn-sentinel btn-outline-s" onclick="resetDefaults()">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ML Engine Status + System Health -->
+        <div class="col-12 col-lg-5">
+
+            <!-- ML Engine Status -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-circle-nodes" style="color:var(--accent-cyan)"></i> ENGINE STATUS</span>
+                </div>
+                <div class="card-body">
+                    <div id="ml-status-panel">
+                        <div class="d-flex justify-content-center py-3"><div class="spinner-small"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-microchip" style="color:var(--accent-green)"></i> SYSTEM HEALTH</span>
+                    <span id="sys-refresh-time" style="font-size:10px;color:var(--text-dim);">--</span>
+                </div>
+                <div class="card-body" id="system-health-panel">
+                    <div class="d-flex justify-content-center py-3"><div class="spinner-small"></div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Explainability Panel -->
+    <div class="row g-3 mt-0">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-microscope" style="color:var(--accent-yellow)"></i> PREDICTION FORMULA EXPLAINER</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <div style="background:var(--bg-void);border:1px solid var(--border);border-radius:10px;padding:20px;font-family:var(--font-mono);text-align:center;font-size:15px;line-height:2;">
+                                <span style="color:var(--accent-cyan);">Final Score</span>
+                                <span style="color:var(--text-secondary);"> = </span>
+                                <span style="color:var(--accent-purple);">α</span>
+                                <span style="color:var(--text-secondary);"> × </span>
+                                <span style="color:var(--accent-blue);">RF_Score</span>
+                                <span style="color:var(--text-secondary);"> + </span>
+                                <span style="color:var(--accent-orange);">β</span>
+                                <span style="color:var(--text-secondary);"> × </span>
+                                <span style="color:var(--accent-yellow);">IsoForest_Score</span>
+                                <br>
+                                <span style="color:var(--text-dim);font-size:11px;">If Final Score ≥ Confidence Threshold → 🚨 ALERT TRIGGERED</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="display:grid;gap:10px;">
+                                <div style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.2);border-radius:8px;padding:10px 14px;">
+                                    <div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">RF Score Range</div>
+                                    <div style="font-size:13px;color:#c4b5fd;font-family:var(--font-mono);">0.0 → 1.0 (Attack probability)</div>
+                                </div>
+                                <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:10px 14px;">
+                                    <div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">IsoForest Score Range</div>
+                                    <div style="font-size:13px;color:#fdba74;font-family:var(--font-mono);">0.0 → 1.0 (Anomaly score)</div>
+                                </div>
+                                <div style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:10px 14px;">
+                                    <div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Live Fusion Score</div>
+                                    <div style="font-size:16px;color:var(--accent-cyan);font-family:var(--font-mono);font-weight:700;" id="live-fusion-score">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- UI Preferences -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark border-bottom border-secondary">
-                <h6 class="m-0 text-light"><i class="fa-solid fa-desktop me-2"></i> Dashboard Preferences</h6>
-            </div>
-            <div class="card-body bg-dark text-light p-4">
-                <div class="mb-4">
-                    <label class="form-label text-light small">Theme Mode</label>
-                    <div class="btn-group w-100" role="group">
-                        <input type="radio" class="btn-check" name="theme" id="darkTheme" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary" for="darkTheme"><i class="fa-solid fa-moon me-2"></i> Dark SOC</label>
-
-                        <input type="radio" class="btn-check" name="theme" id="lightTheme" autocomplete="off" disabled>
-                        <label class="btn btn-outline-secondary" for="lightTheme"><i class="fa-solid fa-sun me-2"></i> Light (Disabled)</label>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label text-light small">Alert Notifications</label>
-                    <div class="form-check form-switch mb-2">
-                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
-                        <label class="form-check-label">Enable Audio Alerts for Critical Threats</label>
-                    </div>
-                    <div class="form-check form-switch mb-2">
-                        <input class="form-check-input bg-primary border-primary" type="checkbox" checked>
-                        <label class="form-check-label">Show Browser Desktop Notifications</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
 {% endblock %}
