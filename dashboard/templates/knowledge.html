@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block page_title %}Knowledge Base{% endblock %}
+{% block header_title %}<i class="fa-solid fa-book-open me-2" style="color:var(--accent-blue)"></i> Cybersecurity Knowledge Center{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+
+    <!-- Search Bar -->
+    <div class="card mb-4">
+        <div class="card-body" style="padding:14px 18px;">
+            <div style="position:relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);"></i>
+                <input type="text" class="form-control" id="knowledge-search" placeholder="Search topics, attack types, or concepts..." style="padding-left:36px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Nav Chips -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+        {% set chips = [
+            ("What is IDS?", "fa-shield-halved", "accent-blue"),
+            ("Detection Methods", "fa-layer-group", "accent-purple"),
+            ("ML Engines", "fa-brain", "accent-cyan"),
+            ("Packet Lifecycle", "fa-route", "accent-green"),
+            ("MITRE ATT&CK", "fa-chess-knight", "accent-yellow"),
+            ("Severity Guide", "fa-triangle-exclamation", "sev-high"),
+            ("Attack Types", "fa-skull-crossbones", "sev-critical"),
+            ("SOC Workflow", "fa-diagram-project", "accent-orange"),
+        ] %}
+        {% for label, icon, color in chips %}
+        <a href="#topic-{{ loop.index }}" class="btn-sentinel btn-outline-s" style="font-size:11px;padding:5px 12px;">
+            <i class="fa-solid {{ icon }}" style="color:var(--{{ color }});"></i> {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Topic Grid -->
+    <div id="knowledge-content">
+
+        <!-- WHAT IS IDS -->
+        <div class="knowledge-section mb-4" id="topic-1">
+            <div class="card">
+                <div class="card-header" onclick="toggleSection(this)" style="cursor:pointer;">
+                    <span class="card-title">
+                        <span style="width:28px;height:28px;border-radius:8px;background:rgba(59,130,246,0.15);display:inline-flex;align-items:center;justify-content:center;margin-right:8px;">
+                            <i class="fa-solid fa-shield-halved" style="color:var(--accent-blue);"></i>
+                        </span>
+                        WHAT IS AN IDS?
+                    </span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="card-body knowledge-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h6 style="color:var(--accent-blue);margin-bottom:10px;">Intrusion Detection System (IDS)</h6>
+                            <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+                                An IDS is a security tool that monitors network traffic or system activity for malicious behavior or policy violations. When it detects suspicious activity, it generates an <strong style="color:var(--text-primary);">alert</strong> for a SOC analyst to investigate.
+                            </p>
+                            <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+                                Unlike a firewall (which blocks traffic), an IDS is <strong style="color:var(--text-primary);">passive</strong> — it observes and reports without actively blocking.
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 style="color:var(--accent-cyan);margin-bottom:10px;">NIDS vs HIDS</h6>
+                            <div style="display:grid;gap:10px;">
+                                <div style="background:var(--bg-void);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                                    <div style="font-size:11px;font-weight:700;color:var(--accent-cyan);margin-bottom:4px;">NETWORK IDS (NIDS)</div>
+                                    <div style="font-size:12px;color:var(--text-secondary);">Monitors all traffic passing through a network segment. Sentinel-IDS is a NIDS.</div>
+                                </div>
+                                <div style="background:var(--bg-void);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                                    <div style="font-size:11px;font-weight:700;color:var(--accent-yellow);margin-bottom:4px;">HOST IDS (HIDS)</div>
+                                    <div style="font-size:12px;color:var(--text-secondary);">Monitors individual host system calls, logs, and file changes.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETECTION METHODS -->
+        <div class="knowledge-section mb-4" id="topic-2">
+            <div class="card">
+                <div class="card-header" onclick="toggleSection(this)" style="cursor:pointer;">
+                    <span class="card-title">
+                        <span style="width:28px;height:28px;border-radius:8px;background:rgba(139,92,246,0.15);display:inline-flex;align-items:center;justify-content:center;margin-right:8px;">
+                            <i class="fa-solid fa-layer-group" style="color:var(--accent-purple);"></i>
+                        </span>
+                        DETECTION METHODS: SIGNATURE vs HEURISTIC vs ML
+                    </span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="card-body knowledge-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:16px;height:100%;">
+                                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#c4b5fd;margin-bottom:10px;">🔑 Signature Engine</div>
+                                <p style="font-size:12px;color:var(--text-secondary);line-height:1.6;">Matches packet payload against a database of known attack patterns (like antivirus signatures). Fast and precise but <strong style="color:var(--text-primary);">cannot detect unknown (zero-day) threats.</strong></p>
+                                <div style="font-size:11px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:8px;margin-top:8px;"><strong>Example:</strong> Detect "union select" in HTTP payload → SQL Injection alert</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:16px;height:100%;">
+                                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#fde68a;margin-bottom:10px;">📊 Heuristic Engine</div>
+                                <p style="font-size:12px;color:var(--text-secondary);line-height:1.6;">Detects behavioral anomalies based on thresholds and rules (e.g., too many SYN packets). Can catch <strong style="color:var(--text-primary);">unknown attacks</strong> but may have more false positives.</p>
+                                <div style="font-size:11px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:8px;margin-top:8px;"><strong>Example:</strong> 50 SYN packets in 10s from one IP → SYN Flood alert</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:10px;padding:16px;height:100%;">
+                                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#67e8f9;margin-bottom:10px;">🤖 ML Engine</div>
+                                <p style="font-size:12px;color:var(--text-secondary);line-height:1.6;">Uses trained models to predict threats from packet features. Combines supervised (RandomForest) and unsupervised (IsolationForest) learning for <strong style="color:var(--text-primary);">adaptive detection.</strong></p>
+                                <div style="font-size:11px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:8px;margin-top:8px;"><strong>Example:</strong> Feature vector scores 0.85 → High-confidence anomaly alert</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PACKET LIFECYCLE -->
+        <div class="knowledge-section mb-4" id="topic-4">
+            <div class="card">
+                <div class="card-header" onclick="toggleSection(this)" style="cursor:pointer;">
+                    <span class="card-title">
+                        <span style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.15);display:inline-flex;align-items:center;justify-content:center;margin-right:8px;">
+                            <i class="fa-solid fa-route" style="color:var(--accent-green);"></i>
+                        </span>
+                        PACKET LIFECYCLE IN SENTINEL-IDS
+                    </span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="card-body knowledge-body">
+                    <div class="pipeline">
+                        <div class="pipeline-node">
+                            <div class="pipeline-node-icon">🌐</div>
+                            <div class="pipeline-node-label">Network<br>Interface</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node">
+                            <div class="pipeline-node-icon">📡</div>
+                            <div class="pipeline-node-label">Scapy<br>Sniffer</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node">
+                            <div class="pipeline-node-icon">⚡</div>
+                            <div class="pipeline-node-label">MP<br>Queue</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node">
+                            <div class="pipeline-node-icon">🔍</div>
+                            <div class="pipeline-node-label">Protocol<br>Parser</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node">
+                            <div class="pipeline-node-icon">🔄</div>
+                            <div class="pipeline-node-label">Flow<br>Manager</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node" style="border-color:rgba(59,130,246,0.4);">
+                            <div class="pipeline-node-icon">🛡️</div>
+                            <div class="pipeline-node-label">3 Detection<br>Engines</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node">
+                            <div class="pipeline-node-icon">🚨</div>
+                            <div class="pipeline-node-label">Alert<br>Manager</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node">
+                            <div class="pipeline-node-icon">📋</div>
+                            <div class="pipeline-node-label">JSON<br>Logger</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-node" style="border-color:rgba(16,185,129,0.4);">
+                            <div class="pipeline-node-icon">📊</div>
+                            <div class="pipeline-node-label">SOC<br>Dashboard</div>
+                        </div>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:16px;">
+                        Each packet travels this pipeline in &lt;1ms. Multiprocessing ensures sniffing never blocks analysis.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MITRE ATT&CK -->
+        <div class="knowledge-section mb-4" id="topic-5">
+            <div class="card">
+                <div class="card-header" onclick="toggleSection(this)" style="cursor:pointer;">
+                    <span class="card-title">
+                        <span style="width:28px;height:28px;border-radius:8px;background:rgba(245,158,11,0.15);display:inline-flex;align-items:center;justify-content:center;margin-right:8px;">
+                            <i class="fa-solid fa-chess-knight" style="color:var(--accent-yellow);"></i>
+                        </span>
+                        MITRE ATT&CK FRAMEWORK
+                    </span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="card-body knowledge-body">
+                    <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;">
+                        MITRE ATT&CK is a globally recognized framework that categorizes adversary tactics and techniques based on real-world observations. Every alert in Sentinel-IDS is automatically mapped to a MITRE tactic.
+                    </p>
+                    <div class="row g-2">
+                        {% set tactics = [
+                            ("Initial Access", "fa-door-open", "ef4444", "How attackers first get into a network", "T1190: SQLi, XSS"),
+                            ("Discovery", "fa-magnifying-glass", "f59e0b", "Techniques to explore and map the network", "T1046: Port Scan"),
+                            ("Command & Control", "fa-tower-broadcast", "8b5cf6", "Maintaining communication with compromised systems", "T1071: DNS Tunneling"),
+                            ("Impact", "fa-bomb", "dc2626", "Disrupting availability or integrity", "T1499: SYN Flood / DoS"),
+                            ("Lateral Movement", "fa-arrows-left-right", "f97316", "Moving through the network", "T1021: SSH, SMB Access"),
+                            ("Exfiltration", "fa-file-export", "06b6d4", "Stealing data out of the network", "T1041: C2 Exfil"),
+                        ] %}
+                        {% for name, icon, color, desc, example in tactics %}
+                        <div class="col-md-6">
+                            <div style="background:var(--bg-void);border:1px solid #{{ color }}33;border-radius:8px;padding:12px;display:flex;gap:10px;align-items:flex-start;">
+                                <div style="width:32px;height:32px;border-radius:8px;background:#{{ color }}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="fa-solid {{ icon }}" style="color:#{{ color }};font-size:13px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:3px;">{{ name }}</div>
+                                    <div style="font-size:11px;color:var(--text-secondary);">{{ desc }}</div>
+                                    <div style="font-size:10px;color:#{{ color }};margin-top:4px;font-family:var(--font-mono);">{{ example }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEVERITY GUIDE -->
+        <div class="knowledge-section mb-4" id="topic-6">
+            <div class="card">
+                <div class="card-header" onclick="toggleSection(this)" style="cursor:pointer;">
+                    <span class="card-title">
+                        <span style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,0.15);display:inline-flex;align-items:center;justify-content:center;margin-right:8px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:var(--sev-high);"></i>
+                        </span>
+                        SEVERITY LEVEL GUIDE
+                    </span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="card-body knowledge-body">
+                    <div style="display:grid;gap:10px;">
+                        {% set levels = [
+                            ("CRITICAL", "dc2626", "Immediate threat. Active exploitation in progress. Requires instant response.", "> 80 risk score"),
+                            ("HIGH", "ef4444", "Serious threat detected. High confidence malicious activity. Investigate within minutes.", "60-80 risk score"),
+                            ("MEDIUM", "f59e0b", "Suspicious behavior. Could be a threat or false positive. Investigate within hours.", "40-60 risk score"),
+                            ("LOW", "3b82f6", "Informational. Minor anomaly. Review during regular operations.", "< 40 risk score"),
+                        ] %}
+                        {% for name, color, desc, score in levels %}
+                        <div style="display:flex;align-items:center;gap:14px;padding:12px;background:var(--bg-void);border:1px solid #{{ color }}22;border-radius:8px;">
+                            <span class="sev-badge sev-{{ name.lower() }}" style="min-width:80px;justify-content:center;">{{ name }}</span>
+                            <div style="flex:1;">
+                                <div style="font-size:12px;color:var(--text-primary);">{{ desc }}</div>
+                            </div>
+                            <code style="font-size:11px;color:#{{ color }};white-space:nowrap;">{{ score }}</code>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATTACK TYPES -->
+        <div class="knowledge-section mb-4" id="topic-7">
+            <div class="card">
+                <div class="card-header" onclick="toggleSection(this)" style="cursor:pointer;">
+                    <span class="card-title">
+                        <span style="width:28px;height:28px;border-radius:8px;background:rgba(220,38,38,0.15);display:inline-flex;align-items:center;justify-content:center;margin-right:8px;">
+                            <i class="fa-solid fa-skull-crossbones" style="color:var(--sev-critical);"></i>
+                        </span>
+                        ATTACK TYPES DETECTED
+                    </span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="card-body knowledge-body">
+                    <div class="row g-2">
+                        {% set attacks = [
+                            ("SQL Injection", "fa-database", "ef4444", "Malicious SQL code injected into web requests to manipulate the database.", "Signature Engine"),
+                            ("XSS", "fa-code", "f97316", "Cross-Site Scripting — injecting malicious scripts into web pages.", "Signature Engine"),
+                            ("SYN Flood", "fa-wave-square", "dc2626", "Sending thousands of SYN packets to exhaust server resources (DoS).", "Heuristic Engine"),
+                            ("Port Scan", "fa-network-wired", "f59e0b", "Probing multiple ports to discover open services and vulnerabilities.", "Heuristic Engine"),
+                            ("DNS Tunneling", "fa-tower-broadcast", "8b5cf6", "Encoding data in DNS queries to create a covert communication channel.", "Heuristic Engine"),
+                            ("ML Anomaly", "fa-brain", "06b6d4", "Unknown attack pattern detected by the ML model with high confidence.", "ML Engine"),
+                        ] %}
+                        {% for name, icon, color, desc, engine in attacks %}
+                        <div class="col-md-6">
+                            <div style="background:var(--bg-void);border:1px solid #{{ color }}22;border-radius:8px;padding:12px;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                    <i class="fa-solid {{ icon }}" style="color:#{{ color }};font-size:14px;"></i>
+                                    <strong style="font-size:12px;color:var(--text-primary);">{{ name }}</strong>
+                                    <span class="ms-auto engine-badge engine-{{ 'sig' if 'Sig' in engine else 'heu' if 'Heu' in engine else 'ml' }}" style="font-size:9px;">{{ engine }}</span>
+                                </div>
+                                <p style="font-size:11px;color:var(--text-secondary);line-height:1.5;margin:0;">{{ desc }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle expand/collapse
+    function toggleSection(header) {
+        const body = header.nextElementSibling;
+        const icon = header.querySelector(".toggle-icon");
+        if (body.style.display === "none") {
+            body.style.display = "block";
+            icon.style.transform = "rotate(0deg)";
+        } else {
+            body.style.display = "none";
+            icon.style.transform = "rotate(-90deg)";
+        }
+    }
+
+    // Search filter
+    document.getElementById("knowledge-search").addEventListener("input", function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll(".knowledge-section").forEach((section) => {
+            const text = section.textContent.toLowerCase();
+            section.style.display = text.includes(q) ? "block" : "none";
+        });
+    });
+</script>
+{% endblock %}
