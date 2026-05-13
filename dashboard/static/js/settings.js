@@ -124,23 +124,51 @@
                 const el = document.getElementById("ml-status-panel");
                 if (!el) return;
 
-                const statusItem = (label, value, ok) => `
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
-                        <span style="font-size:12px;color:var(--text-secondary);">${label}</span>
-                        <span style="font-size:12px;font-weight:600;color:${ok ? 'var(--accent-green)' : 'var(--sev-high)'};">
-                            <i class="fa-solid fa-${ok ? 'circle-check' : 'circle-xmark'}"></i> ${value}
+                const models = d.models || [];
+                if (models.length === 0) {
+                    el.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;text-align:center;padding:12px;">ML Engine offline or initializing...</div>';
+                    return;
+                }
+
+                const envRow = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:12px;">
+                        <span style="font-size:12px;font-weight:600;color:var(--text-primary);">Runtime Environment</span>
+                        <span style="font-size:12px;font-weight:600;color:${d.env_ok ? 'var(--accent-green)' : 'var(--sev-critical)'};">
+                            <i class="fa-solid fa-${d.env_ok ? 'circle-check' : 'circle-xmark'}"></i>
+                            ${d.env_ok ? 'COMPATIBLE' : 'INCOMPATIBLE'}
                         </span>
-                    </div>
-                `;
-                el.innerHTML = `
-                    ${statusItem("ML Engine", d.ml_enabled ? "Active" : "Disabled", d.ml_enabled)}
-                    ${statusItem("RandomForest Model", d.rf_loaded ? "Loaded" : "Not Loaded", d.rf_loaded)}
-                    ${statusItem("IsolationForest Model", d.iso_loaded ? "Loaded" : "Not Loaded", d.iso_loaded)}
-                    ${statusItem("Feature Scaler", d.scaler_loaded ? "Loaded" : "Not Loaded", d.scaler_loaded)}
-                    ${statusItem("Alpha (α)", (d.config?.alpha ?? "--"), true)}
-                    ${statusItem("Beta (β)", (d.config?.beta ?? "--"), true)}
-                    ${statusItem("Confidence Threshold", (d.config?.confidence_threshold ?? "--"), true)}
-                `;
+                    </div>`;
+
+                const modelCards = models.map(m => {
+                    const color = m.ready ? 'var(--accent-green)' : 'var(--sev-critical)';
+                    const icon  = m.ready ? 'circle-check' : 'circle-xmark';
+                    return `
+                        <div style="background:var(--bg-void);border:1px solid ${m.ready ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'};border-radius:8px;padding:12px;margin-bottom:10px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                                <strong style="font-size:12px;color:var(--text-primary);">${m.name}</strong>
+                                <span style="font-size:11px;font-weight:700;color:${color};">
+                                    <i class="fa-solid fa-${icon}"></i> ${m.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+                                <span style="font-size:10px;color:var(--text-dim);">Attack Type</span>
+                                <span style="font-size:10px;color:var(--accent-cyan);">${m.attack_type}</span>
+                                <span style="font-size:10px;color:var(--text-dim);">Features</span>
+                                <span style="font-size:10px;color:var(--text-primary);">${m.feature_count}</span>
+                                <span style="font-size:10px;color:var(--text-dim);">sklearn</span>
+                                <span style="font-size:10px;color:var(--text-primary);">${m.sklearn_version}</span>
+                                <span style="font-size:10px;color:var(--text-dim);">Trained</span>
+                                <span style="font-size:10px;color:var(--text-primary);">${m.training_date}</span>
+                            </div>
+                            ${m.error ? `<div style="font-size:10px;color:var(--sev-critical);margin-top:6px;">⚠️ ${m.error}</div>` : ''}
+                        </div>`;
+                }).join("");
+
+                el.innerHTML = envRow + modelCards +
+                    `<div style="font-size:10px;color:var(--text-dim);text-align:center;padding-top:6px;">
+                        ${d.ready_models}/${d.total_models} models ready
+                    </div>`;
+
             }).catch(() => {
                 const el = document.getElementById("ml-status-panel");
                 if (el) el.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;text-align:center;padding:12px;">ML Engine offline or starting...</div>';

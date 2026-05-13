@@ -46,6 +46,8 @@ import csv
 import io
 import time
 import logging
+import threading
+import subprocess
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if BASE_DIR not in sys.path:
@@ -469,8 +471,102 @@ def api_remove_ioc(ip):
 
 
 # =========================================================
+# ML Model Registry Status API (upgraded)
+# =========================================================
+@app.route('/api/ml-stats')
+def api_ml_stats():
+    """Return status of all loaded ML models from the registry."""
+    try:
+        from core.model_registry import get_registry
+        registry = get_registry()
+        if not registry._loaded:
+            registry.initialize()
+        return jsonify({
+            "status": "success",
+            "data": {
+                "models": registry.get_status_summary(),
+                "total_models": len(registry.get_all_bundles()),
+                "ready_models": len(registry.get_ready_bundles()),
+                "env_ok": registry._env_ok,
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "success", "data": {"models": [], "error": str(e)}})
+
+
+# =========================================================
+# Attack Lab View
+# =========================================================
+@app.route('/attack-lab')
+def attack_lab_view():
+    return render_template('attack_lab.html', active_page='attack_lab')
+
+
+# =========================================================
+# Attack Lab API
+# =========================================================
+_target_process = None
+
+@app.route('/api/attack-lab/start-target', methods=['POST'])
+def api_start_target():
+    global _target_process
+    try:
+        target_script = os.path.join(BASE_DIR, 'attack_lab', 'targets', 'vulnerable_flask_app.py')
+        if _target_process and _target_process.poll() is None:
+            return jsonify({"status": "already_running", "message": "Target already running"})
+        _target_process = subprocess.Popen(
+            [sys.executable, target_script],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        return jsonify({"status": "success", "message": "Target started on :5001", "pid": _target_process.pid})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/attack-lab/launch', methods=['POST'])
+def api_launch_attack():
+    """Launch an attack scenario via the attack lab."""
+    data = request.json or {}
+    attack  = data.get('attack', 'portscan')
+    mode    = data.get('mode', 'connect')
+    target  = data.get('target', '127.0.0.1')
+    port    = int(data.get('port', 5001))
+    count   = int(data.get('count', 100))
+
+    # Safety: only allow localhost
+    allowed = ['127.0.0.1', 'localhost']
+    if target not in allowed:
+        return jsonify({'status': 'error', 'message': 'Only localhost targets allowed'}), 403
+
+    try:
+        from attack_lab.launcher import launch
+        result = launch(attack=attack, target=target, mode=mode,
+                        count=count, port=port, verbose=False)
+        return jsonify({'status': 'success', 'result': result})
+    except Exception as e:
+        log.error(f'[AttackLab] Launch error: {e}')
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/attack-lab/sessions')
+def api_attack_sessions():
+    try:
+        from attack_lab.launcher import get_session_log
+        return jsonify({'status': 'success', 'data': get_session_log()})
+    except Exception as e:
+        return jsonify({'status': 'success', 'data': []})
+
+
+# =========================================================
 # Application Entry Point
 # =========================================================
 if __name__ == '__main__':
-    log.info("🛡️  Sentinel-IDS SOC Dashboard starting on http://0.0.0.0:5000")
+    # Pre-initialize ML registry before first request
+    try:
+        from core.model_registry import get_registry
+        get_registry().initialize()
+    except Exception as e:
+        log.warning(f'ML pre-init skipped: {e}')
+
+    log.info('🛡️  Sentinel-IDS SOC Dashboard starting on http://0.0.0.0:5000')
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)

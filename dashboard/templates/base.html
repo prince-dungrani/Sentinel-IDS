@@ -80,6 +80,15 @@
                 <span class="nav-icon"><i class="fa-solid fa-sliders"></i></span>
                 ML Settings
             </a>
+
+            <div class="sidebar-section-label">Lab</div>
+
+            <a href="{{ url_for('attack_lab_view') }}"
+               class="nav-item {% if active_page == 'attack_lab' %}active{% endif %}"
+               style="{% if active_page == 'attack_lab' %}{% else %}color:var(--accent-orange);{% endif %}">
+                <span class="nav-icon"><i class="fa-solid fa-flask"></i></span>
+                Attack Lab
+            </a>
         </nav>
 
         <!-- Status Footer -->
