@@ -1,0 +1,40 @@
+{
+  "models": [
+    {
+      "id": "portscan_v1",
+      "name": "PortScan Detector",
+      "attack_type": "PortScan",
+      "version": "1.0",
+      "status": "active",
+      "python_version": "3.12.13",
+      "sklearn_version": "1.6.1",
+      "numpy_version": "2.0.2",
+      "feature_count": 78,
+      "training_date": "2026-05-13",
+      "model_dir": "ml/models/portscan",
+      "rf_model": "rf_model.joblib",
+      "iso_model": "iso_model.joblib",
+      "scaler": "scaler.joblib",
+      "metadata": "model_metadata.json",
+      "description": "Detects TCP port scanning behavior using CICIDS2017 dataset"
+    },
+    {
+      "id": "ddos_v1",
+      "name": "DDoS Detector",
+      "attack_type": "DDoS",
+      "version": "1.0",
+      "status": "active",
+      "python_version": "3.12.13",
+      "sklearn_version": "1.6.1",
+      "numpy_version": "2.0.2",
+      "feature_count": 64,
+      "training_date": "2026-05-13",
+      "model_dir": "ml/models/ddos",
+      "rf_model": "rf_model.joblib",
+      "iso_model": "iso_model.joblib",
+      "scaler": "scaler.joblib",
+      "metadata": "model_metadata.json",
+      "description": "Detects volumetric DDoS/SYN flood attacks using CICIDS2017 dataset"
+    }
+  ]
+}

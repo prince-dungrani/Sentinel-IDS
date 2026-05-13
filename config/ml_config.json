@@ -1,13 +1,15 @@
 {
-  "alpha": 0.6,
-  "beta": 0.4,
-  "anomaly_threshold": 0.5,
-  "confidence_threshold": 0.65,
+  "alpha": 0.7,
+  "beta": 0.3,
+  "confidence_threshold": 0.60,
+  "anomaly_threshold": 0.50,
   "sensitivity": "medium",
   "false_positive_tolerance": "medium",
-  "rf_weight": 0.6,
-  "iso_weight": 0.4,
+  "top_features_count": 5,
   "ml_enabled": true,
+  "portscan_enabled": true,
+  "ddos_enabled": true,
   "explainability_enabled": true,
-  "top_features_count": 5
+  "prediction_cache_size": 2000,
+  "min_flow_packets_for_ml": 3
 }
